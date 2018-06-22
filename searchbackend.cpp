@@ -9,6 +9,10 @@
 #include <QJsonObject>
 
 
+#define RANGE(x)  x.begin(), x.end()
+
+using namespace EasyGumbo;
+
 class SearchBackend::Private
 {
 public:
@@ -62,12 +66,16 @@ bool SearchBackend::search(const QString &backendName, const QString &searchTerm
     {
         d->runningBackend = backendName;
 
-        QUrl netUrl(QLatin1String("https://en.wikipedia.org/wiki/"));
-        netUrl = QUrl(netUrl.toString().append(searchTerm));
-//        q.addQueryItem(QLatin1String("format"), QLatin1String("xml"));
-//        q.addQueryItem(QLatin1String("addressdetails"), QLatin1String("1"));
-//        q.addQueryItem(QLatin1String("limit"), QLatin1String("1"));
-//        q.addQueryItem(QLatin1String("accept-language"), QLatin1String("en"));
+        //https://en.wikipedia.org/w/index.php?title=Albert_Einstein&printable=yes#bodyContent
+        QUrlQuery query;
+
+        QUrl netUrl(QLatin1String("https://en.wikipedia.org/w/index.php?"));
+        query.addQueryItem("title",searchTerm);
+        query.addQueryItem("printable","yes");
+
+        netUrl.setQuery(query);
+
+        netUrl = QUrl(netUrl.toString().append("#bodyContent"));
 
         qDebug() << netUrl;
 
@@ -75,6 +83,7 @@ bool SearchBackend::search(const QString &backendName, const QString &searchTerm
         netRequest.setRawHeader("User-Agent", "Mozilla");
         netRequest.setAttribute(QNetworkRequest::RedirectPolicyAttribute,
                                 QNetworkRequest::NoLessSafeRedirectPolicy);
+
         d->netReply = mngr->get(netRequest);
 
         return true;
@@ -85,15 +94,12 @@ bool SearchBackend::search(const QString &backendName, const QString &searchTerm
  }
 
 
-
-
-
+//hint
+//https://stackoverflow.com/questions/1565347/get-first-lines-of-wikipedia-article/19781754
  void SearchBackend::slotFinished(QNetworkReply* reply)
  {
      if (reply != d->netReply)
-     {
          return;
-     }
 
      if (reply->error() != QNetworkReply::NoError)
      {
@@ -105,7 +111,9 @@ bool SearchBackend::search(const QString &backendName, const QString &searchTerm
 
     d->searchData.append(reply->readAll());
 
+
     const QString resultString = QString::fromUtf8(d->searchData.constData(), d->searchData.count());
+
 
     if(d->runningBackend == QLatin1String("wikipedia"))
     {
@@ -118,31 +126,69 @@ bool SearchBackend::search(const QString &backendName, const QString &searchTerm
         {
             QDomElement resultElement = resultNode.toElement();
 
-            if(resultElement.isNull())
-                continue;
-
-             QString  title = resultElement.attribute(QLatin1String("title"));
-
-            qDebug() << "title" <<title;
+            qDebug() << resultElement.text();
 
 
-            SearchResult  result;
+//            if(resultElement.isNull())
+//                continue;
 
-            result.name        = title;
+//             QString  title = resultElement.attribute(QLatin1String("title"));
 
-//            if(!placeId.isEmpty())
-//                result.internalId = QLatin1String("wikipedia-") + placeId;
+//            qDebug() << "title" <<title;
 
-//            d->results << result;
+
+//            SearchResult  result;
+
+//            result.name        = title;
+
+    //            if(!placeId.isEmpty())
+    //                result.internalId = QLatin1String("wikipedia-") + placeId;
+
+    //            d->results << result;
 
         }
 
     }
 
+
     emit signalSearchCompleted();
 
     reply->deleteLater();
 }
+
+ void SearchBackend::parse(const QByteArray& html)
+ {
+     Gumbo gumbo(html.data());
+
+     if(gumbo)
+     {
+         using Iterator = Gumbo::iterator;
+         const Iterator end;
+
+         const auto pages = findAll(gumbo.begin(), gumbo.end(), Tag(GUMBO_TAG_P));
+         Iterator iter(pages[0]->parent);
+
+         while(iter != end )
+         {
+
+             if (iter->type == GUMBO_NODE_TEXT)
+             {
+               QString data = QString::fromUtf8(iter->v.text.text);
+               qDebug() << data;
+
+             }
+             ++iter;
+         }
+     }
+
+
+ }
+
+ void SearchBackend::extractHTMLTag(GumboNode* node)
+ {
+
+
+ }
 
  SearchBackend::SearchResult::List SearchBackend::getResults() const
  {

@@ -5,7 +5,7 @@
 #include <QObject>
 #include <QNetworkReply>
 #include "geocoordinates.h"
-
+#include "gumbo.hpp"
 /*
  * This code bring on https://github.com/KDE/digikam/
  *
@@ -28,6 +28,7 @@ public:
         typedef QList<SearchResult> List;
         GeoCoordinates              coordinates;
         QString                     name;
+
         GeoCoordinates::Pair        boundingBox;
         QString                     internalId;
         QString                     country;
@@ -42,6 +43,7 @@ public:
     ~SearchBackend();
 
     bool search(const QString& backendName,const QString& searchTerm);
+
     SearchResult::List getResults() const;
     QString getErrorMessage() const;
 
@@ -51,8 +53,12 @@ signals:
     void signalSearchCompleted();
 
 public slots:
-
    void slotFinished(QNetworkReply* reply);
+
+
+private:
+   void parse(const QByteArray& html);
+   void extractHTMLTag(GumboNode* node);
 
 private:
     class Private;
@@ -60,3 +66,16 @@ private:
 };
 
 #endif // SEARCHBACKEND_H
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -41,3 +41,6 @@ FORMS += \
         mainwindow.ui
 
 include($$PWD/deps/GumboParser.pri)
+
+DISTFILES += \
+    memo

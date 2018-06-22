@@ -150,7 +150,7 @@ void MainWindow::slotUpdateAction()
 
     const bool haveSearchText        = !ui->LE_Keyword->text().isEmpty();
 
-    ui->btnSearch->setEnabled(haveSearchText && !d->searchInProgress);
+    //ui->btnSearch->setEnabled(haveSearchText && !d->searchInProgress);
     d->actionClearResultsList->setEnabled(d->searchResultsModel->rowCount()>0);
 
 }
