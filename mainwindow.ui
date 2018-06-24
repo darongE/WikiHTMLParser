@@ -20,7 +20,11 @@
       <item>
        <layout class="QHBoxLayout" name="horizontalLayout_3">
         <item>
-         <widget class="QLineEdit" name="LE_Keyword"/>
+         <widget class="QLineEdit" name="LE_Keyword">
+          <property name="text">
+           <string>Thomas Edison</string>
+          </property>
+         </widget>
         </item>
         <item>
          <widget class="QPushButton" name="btnSearch">

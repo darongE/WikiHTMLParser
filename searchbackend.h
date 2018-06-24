@@ -57,8 +57,7 @@ public slots:
 
 
 private:
-   void parse(const QByteArray& html);
-   void extractHTMLTag(GumboNode* node);
+   void parse(QByteArray &html);
 
 private:
     class Private;

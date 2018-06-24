@@ -7,6 +7,7 @@
 #include <QJsonDocument>
 #include <QJsonArray>
 #include <QJsonObject>
+#include <QXmlStreamReader>
 
 
 #define RANGE(x)  x.begin(), x.end()
@@ -112,88 +113,89 @@ bool SearchBackend::search(const QString &backendName, const QString &searchTerm
     d->searchData.append(reply->readAll());
 
 
-    const QString resultString = QString::fromUtf8(d->searchData.constData(), d->searchData.count());
+ //   QString resultString = QString::fromUtf8(d->searchData.constData(), d->searchData.count());
 
-
-    if(d->runningBackend == QLatin1String("wikipedia"))
-    {
-        QDomDocument doc;
-        doc.setContent(resultString);
-
-        QDomElement docElement = doc.documentElement();
-
-        for(QDomNode resultNode = docElement.firstChild(); !resultNode.isNull(); resultNode = resultNode.nextSibling())
-        {
-            QDomElement resultElement = resultNode.toElement();
-
-            qDebug() << resultElement.text();
-
-
-//            if(resultElement.isNull())
-//                continue;
-
-//             QString  title = resultElement.attribute(QLatin1String("title"));
-
-//            qDebug() << "title" <<title;
-
-
-//            SearchResult  result;
-
-//            result.name        = title;
-
-    //            if(!placeId.isEmpty())
-    //                result.internalId = QLatin1String("wikipedia-") + placeId;
-
-    //            d->results << result;
-
-        }
-
-    }
-
-
+    parse(d->searchData);
     emit signalSearchCompleted();
 
     reply->deleteLater();
 }
 
- void SearchBackend::parse(const QByteArray& html)
+
+ void SearchBackend::parse(QByteArray& html)
  {
      Gumbo gumbo(html.data());
+     QString data, text;
+     QStringList stringList;
+
+
+
 
      if(gumbo)
      {
          using Iterator = Gumbo::iterator;
-         const Iterator end;
 
          const auto pages = findAll(gumbo.begin(), gumbo.end(), Tag(GUMBO_TAG_P));
-         Iterator iter(pages[0]->parent);
 
-         while(iter != end )
+         QRegExp rx("\\[|\\]");
+
+         for (size_t row = 0; row < pages.size(); ++row)
+        {
+
+           Iterator iter(pages[row]), end;
+
+
+           while(iter != end)
          {
 
-             if (iter->type == GUMBO_NODE_TEXT)
+             if (iter->type == GUMBO_NODE_TEXT )
              {
                QString data = QString::fromUtf8(iter->v.text.text);
-               qDebug() << data;
+
+
+               int pos = rx.indexIn(data);
+
+               if(pos > -1)
+                   data.clear();
+               else
+               {
+
+                   if(data.length() > 0)
+                      text += data;
+               }
+
 
              }
-             ++iter;
+             else if(iter->type == GUMBO_NODE_ELEMENT
+                      && iter->v.element.tag == GUMBO_TAG_P && text.length() > 0)
+             {
+
+                  const Element tr(*iter);
+                   stringList << text;
+
+                   qDebug() << text;
+
+                   text.clear();
+
+             }
+
+
+             if(iter->v.element.children.length== 0)
+                 break;
+
+                ++iter;
+
+
          }
-     }
+      }
 
+    }
+}
 
- }
-
- void SearchBackend::extractHTMLTag(GumboNode* node)
- {
-
-
- }
-
- SearchBackend::SearchResult::List SearchBackend::getResults() const
- {
-     return d->results;
- }
+SearchBackend::SearchResult::List SearchBackend::getResults() const
+{
+    return d->results;
+}
 
 
 QString SearchBackend::getErrorMessage() const
