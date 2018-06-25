@@ -76,10 +76,10 @@ QVariant SearchResultModel::data(const QModelIndex &index, int role) const
             "long long long"
             "long QString");*/
             case Qt::DisplayRole:
-            return    QString("%1\n"" %2"" ,%3 , %4").arg(d->searchResults.at(rowNumber).result.name)
-                        .arg(d->searchResults.at(rowNumber).result.coordinates.lat())
-                        .arg(d->searchResults.at(rowNumber).result.coordinates.lon())
-                        .arg(d->searchResults.at(rowNumber).result.country);
+
+
+            return    QString("%1  " "%2" ).arg(d->searchResults.at(rowNumber).result.index)
+                                        .arg(d->searchResults.at(rowNumber).result.text);
 
 
             default:
@@ -160,7 +160,7 @@ void SearchResultModel::addResults(const SearchBackend::SearchResult::List& resu
 
         for (int j = 0; j < d->searchResults.count(); ++j)
         {
-            if (currentResult.internalId == d->searchResults.at(j).result.internalId)
+            if (currentResult.index == d->searchResults.at(j).result.index)
             {
                 isDuplicate = true;
                 break;

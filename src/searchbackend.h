@@ -30,8 +30,10 @@ public:
         QString                     name;
 
         GeoCoordinates::Pair        boundingBox;
-        QString                     internalId;
+        QString                     index;
         QString                     country;
+        QString                     text;
+        QUrl                        mUrl;
 
     };
 

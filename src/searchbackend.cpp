@@ -23,7 +23,8 @@ public:
          netReply(0),
          runningBackend(),
          searchData(),
-         errorMessage()
+         errorMessage(),
+         url()
 
     {
 
@@ -34,6 +35,7 @@ public:
     QString                           runningBackend;
     QByteArray                        searchData;
     QString                           errorMessage;
+    QUrl                              url;
 
 };
 
@@ -77,6 +79,7 @@ bool SearchBackend::search(const QString &backendName, const QString &searchTerm
         netUrl.setQuery(query);
 
         netUrl = QUrl(netUrl.toString().append("#bodyContent"));
+        d->url = netUrl;
 
         qDebug() << netUrl;
 
@@ -112,10 +115,7 @@ bool SearchBackend::search(const QString &backendName, const QString &searchTerm
 
     d->searchData.append(reply->readAll());
 
-
- //   QString resultString = QString::fromUtf8(d->searchData.constData(), d->searchData.count());
-
-    parse(d->searchData);
+   parse(d->searchData);
     emit signalSearchCompleted();
 
     reply->deleteLater();
@@ -125,10 +125,7 @@ bool SearchBackend::search(const QString &backendName, const QString &searchTerm
  void SearchBackend::parse(QByteArray& html)
  {
      Gumbo gumbo(html.data());
-     QString data, text;
-     QStringList stringList;
-
-
+     QString data, paragraph;
 
 
      if(gumbo)
@@ -159,24 +156,31 @@ bool SearchBackend::search(const QString &backendName, const QString &searchTerm
                    data.clear();
                else
                {
-
                    if(data.length() > 0)
-                      text += data;
+                      paragraph += data;
                }
 
 
              }
              else if(iter->type == GUMBO_NODE_ELEMENT
-                      && iter->v.element.tag == GUMBO_TAG_P && text.length() > 0)
+                      && iter->v.element.tag == GUMBO_TAG_P && paragraph.length() > 0)
              {
 
                   const Element tr(*iter);
-                   stringList << text;
 
-                   qDebug() << text;
+                   SearchResult result;
+                   result.text = paragraph;
 
-                   text.clear();
 
+                   if(row == 1)
+                       result.mUrl = d->url;
+
+                   QString strIndex = QString::number(row);
+                   if (!strIndex.isEmpty())
+                       result.index =  strIndex;
+
+                   d->results << result;
+                   paragraph.clear();
              }
 
 
@@ -187,7 +191,9 @@ bool SearchBackend::search(const QString &backendName, const QString &searchTerm
 
 
          }
-      }
+      }   // end of for loop
+
+
 
     }
 }

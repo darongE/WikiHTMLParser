@@ -65,7 +65,7 @@ MainWindow::MainWindow(QWidget *parent) :
     d->actionClearResultsList = new QAction(QString("Clear the search results."), this);
 
     d->actionRemovedSelectedSearchResultsFromList = new QAction(QString("Remove from results list"), this);
-    d->actionRemovedSelectedSearchResultsFromList->setIcon(QIcon::fromTheme(QString::fromLatin1("list-remove")));
+  //  d->actionRemovedSelectedSearchResultsFromList->setIcon(QIcon::fromTheme(QString::fromLatin1("list-remove")));
 
     ui->treeView->setRootIsDecorated(false);
     ui->treeView->setModel(d->searchResultsModel);
@@ -108,6 +108,7 @@ void MainWindow::slotSearchCompleted()
     d->searchResultsModel->addResults(searchResults);
 
 
+    ui->statusBar->showMessage(searchResults.at(0).mUrl.toString());
     slotUpdateAction();
 
 
@@ -116,9 +117,11 @@ void MainWindow::slotSearchCompleted()
 void MainWindow::slotTriggerSearch()
 {
     // check Line edit text
+    //ui->treeView->setModel(nullptr);
     if(ui->LE_Keyword->text().isEmpty() || d->searchInProgress)
         return;
 
+    ui->statusBar->clearMessage();
     d->searchInProgress = true;
     d->searchBackend->search("wikipedia",ui->LE_Keyword->text());
 
@@ -199,9 +202,6 @@ void MainWindow::slotRemoveSelectedFromResultList()
 
     slotUpdateAction();
 }
-
-
-
 
 
 
