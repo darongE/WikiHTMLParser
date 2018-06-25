@@ -5,5 +5,5 @@ Wikipedia page html parsing program
 ![digikam from KDE](https://github.com/KDE/digikam)
 
 ## screen shot
-![image](https://github.com/darongE/WikiHTMLParser/blob/master/imag/window.png)
+![image](https://github.com/darongE/WikiHTMLParser/blob/master/img/window.png)
 
