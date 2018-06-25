@@ -171,7 +171,6 @@ bool SearchBackend::search(const QString &backendName, const QString &searchTerm
                    SearchResult result;
                    result.text = paragraph;
 
-
                    if(row == 1)
                        result.mUrl = d->url;
 

@@ -28,17 +28,20 @@ SOURCES += \
         mainwindow.cpp \
     geocoordinates.cpp \
     searchbackend.cpp \
-    searchresultmodel.cpp
+    searchresultmodel.cpp \
+    contentsdialog.cpp
 
 HEADERS += \
         mainwindow.h \
     geocoordinates.h \
     searchbackend.h \
     searchresultmodel.h \
+    contentsdialog.h
 
 
 FORMS += \
-        mainwindow.ui
+        mainwindow.ui \
+    contentsdialog.ui
 
 include($$PWD/deps/GumboParser.pri)
 

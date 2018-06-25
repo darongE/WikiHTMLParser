@@ -33,6 +33,7 @@ public:
         QString                     index;
         QString                     country;
         QString                     text;
+        QString                     contents;
         QUrl                        mUrl;
 
     };

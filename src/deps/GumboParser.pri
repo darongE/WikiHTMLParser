@@ -14,6 +14,7 @@ HEADERS *= \
     $$PWD/gumbo-parser/include/char_ref.rl \
     $$PWD/gumbo-parser/include/error.h \
     $$PWD/gumbo-parser/include/gumbo.h \
+    $$PWD/gumbo-parser/include/gumbo.hpp \
     $$PWD/gumbo-parser/include/insertion_mode.h \
     $$PWD/gumbo-parser/include/parser.h \
     $$PWD/gumbo-parser/include/string_buffer.h \
