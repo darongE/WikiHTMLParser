@@ -11,15 +11,14 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "searchresultmodel.h"
+#include "contentsdialog.h"
 
 
 static int QItemSelectionModel_selectedRowsCount(const QItemSelectionModel* const selectionModel)
 {
     if (!selectionModel->hasSelection())
-    {
         return 0;
-    }
-
+ 
     return selectionModel->selectedRows().count();
 }
 
@@ -110,14 +109,10 @@ void MainWindow::slotSearchCompleted()
 
     ui->statusBar->showMessage(searchResults.at(0).mUrl.toString());
     slotUpdateAction();
-
-
 }
 
 void MainWindow::slotTriggerSearch()
 {
-    // check Line edit text
-    //ui->treeView->setModel(nullptr);
     if(ui->LE_Keyword->text().isEmpty() || d->searchInProgress)
         return;
 
@@ -128,15 +123,11 @@ void MainWindow::slotTriggerSearch()
      slotUpdateAction();
 }
 
-
 void MainWindow::slotCurrentlySelectedResultChanged(const QModelIndex &current, const QModelIndex &previous)
 {
     Q_UNUSED(previous);
 
 }
-
-
-
 
 void MainWindow::slotClearSearchResults()
 {
@@ -158,7 +149,6 @@ void MainWindow::slotUpdateAction()
 
 }
 
-
 bool MainWindow::eventFilter(QObject *watched, QEvent *event)
 {
     // make context-menu events
@@ -173,7 +163,6 @@ bool MainWindow::eventFilter(QObject *watched, QEvent *event)
 
             }
 
-
             slotUpdateAction();
 
             // construct the context-menu:
@@ -181,7 +170,8 @@ bool MainWindow::eventFilter(QObject *watched, QEvent *event)
             menu->addAction(d->actionRemovedSelectedSearchResultsFromList);
 
             QContextMenuEvent* const e = static_cast<QContextMenuEvent*>(event);
-             menu->exec(e->globalPos());
+            menu->exec(e->globalPos());
+
             delete menu;
         }
     }
@@ -194,19 +184,15 @@ void MainWindow::slotRemoveSelectedFromResultList()
     const QItemSelection selectedRows = d->searchResultsSelectionModel->selection();
 
     if (selectedRows.isEmpty())
-    {
         return;
-    }
 
     d->searchResultsModel->removeRowsBySelection(selectedRows);
 
     slotUpdateAction();
 }
 
-
-
-
-
-
-
-
+void MainWindow::on_btnContents_clicked()
+{
+    ContentsDialog contentsDlg(this);
+    contentsDlg.exec();
+}

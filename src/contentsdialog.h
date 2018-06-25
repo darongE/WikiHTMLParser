@@ -2,7 +2,8 @@
 #define CONTENTSDIALOG_H
 
 #include <QDialog>
-
+#include <QItemSelection>
+#include <QStringListModel>
 namespace Ui {
 class ContentsDialog;
 }
@@ -15,8 +16,16 @@ public:
     explicit ContentsDialog(QWidget *parent = 0);
     ~ContentsDialog();
 
+private slots:
+
+    void init();
+    void clear();
+    void selectionChanged(const QItemSelection &selected, const QItemSelection &deselected);
+
 private:
     Ui::ContentsDialog *ui;
+    QModelIndex mContextIndex;
+    QStringListModel *model;
 };
 
 #endif // CONTENTSDIALOG_H

@@ -28,6 +28,8 @@ private slots:
     void slotRemoveSelectedFromResultList();
     void slotClearSearchResults();
 
+    void on_btnContents_clicked();
+
 protected:
     virtual bool eventFilter(QObject *watched, QEvent *event);
 
