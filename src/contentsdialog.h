@@ -23,9 +23,13 @@ private slots:
     void selectionChanged(const QItemSelection &selected, const QItemSelection &deselected);
 
 private:
+
     Ui::ContentsDialog *ui;
     QModelIndex mContextIndex;
     QStringListModel *model;
+
+    class Private;
+    Private* const *d;
 };
 
 #endif // CONTENTSDIALOG_H

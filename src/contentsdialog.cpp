@@ -1,9 +1,27 @@
 #include "contentsdialog.h"
 #include "ui_contentsdialog.h"
+#include "searchbackend.h"
 #include <QDebug>
 #include <QMessageBox>
 #include <QStandardItemModel>
 #include <QTimer>
+
+
+
+class ContentsDialog::Private
+{
+public:
+    explicit Private()
+    {
+        searchBackend  = 0;
+
+    }
+
+    SearchBackend*     searchBackend;
+    QByteArray          searchData;
+
+
+};
 
 ContentsDialog::ContentsDialog(QWidget *parent) :
     QDialog(parent),
@@ -95,7 +113,7 @@ void ContentsDialog::selectionChanged(const QItemSelection &selected, const QIte
 
 
 
-
+// print out contents
 
 
 

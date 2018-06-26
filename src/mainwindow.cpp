@@ -103,11 +103,11 @@ void MainWindow::slotSearchCompleted()
         return;
     }
 
-    const SearchBackend::SearchResult::List searchResults = d->searchBackend->getResults();
-    d->searchResultsModel->addResults(searchResults);
+//    const SearchBackend::SearchResult::List searchResults = d->searchBackend->getResults();
+//    d->searchResultsModel->addResults(searchResults);
 
 
-    ui->statusBar->showMessage(searchResults.at(0).mUrl.toString());
+    //ui->statusBar->showMessage(searchResults.at(0).mUrl.toString());
     slotUpdateAction();
 }
 

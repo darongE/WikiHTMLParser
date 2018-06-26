@@ -11,7 +11,7 @@
  *
  */
 
-
+using namespace EasyGumbo;
 class SearchBackend : public QObject
 {
     Q_OBJECT
@@ -26,6 +26,8 @@ public:
         }
 
         typedef QList<SearchResult> List;
+
+
         GeoCoordinates              coordinates;
         QString                     name;
 
@@ -33,7 +35,7 @@ public:
         QString                     index;
         QString                     country;
         QString                     text;
-        QString                     contents;
+        QString                 contents;
         QUrl                        mUrl;
 
     };
@@ -60,11 +62,14 @@ public slots:
 
 
 private:
-   void parse(QByteArray &html);
+   void parse(QByteArray bytearray);
+   void parseContents();
+   void parseDetails();
 
 private:
     class Private;
     Private* const d;
+    std::shared_ptr<Gumbo> m_parser;
 };
 
 #endif // SEARCHBACKEND_H
