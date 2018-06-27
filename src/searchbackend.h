@@ -51,7 +51,7 @@ public:
 
     SearchResult::List getResults() const;
     QString getErrorMessage() const;
-
+    void findEndTag(QString &tag, int row);
 
 signals:
 
@@ -62,14 +62,17 @@ public slots:
 
 
 private:
-   void parse(QByteArray bytearray);
-   void parseContents();
-   void parseDetails();
+   void parseAll(const QByteArray &html);
+   void parseText(GumboNode *node);
+   void extractTagPItem(GumboNode *node);
+//   void parseContents(const QByteArray &html);
+//   void parseDetails();
 
 private:
     class Private;
     Private* const d;
-    std::shared_ptr<Gumbo> m_parser;
+
+    QList<int> title_index;
 };
 
 #endif // SEARCHBACKEND_H

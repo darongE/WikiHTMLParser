@@ -1,0 +1,139 @@
+void SearchBackend::parse(QByteArray bytearray)
+{
+    Gumbo gumbo(bytearray.data());
+    QString paragraph;
+
+    QRegExp rx("\\[|\\]");
+
+    int index = 0;
+    if(gumbo){
+
+         using Iterator = Gumbo::iterator;
+         const Iterator end;
+
+         const auto pages = findAll(gumbo.begin(), gumbo.end(), Tag(GUMBO_TAG_P));
+
+         for (size_t row = 0; row < pages.size(); ++row)
+        {
+
+          Iterator iter(pages[row]), end;
+
+         while(iter != end )
+         {
+
+             if (iter->type == GUMBO_NODE_TEXT)
+              {
+                QString data = QString::fromUtf8(iter->v.text.text);
+
+                int pos = rx.indexIn(data);
+
+                if(pos > -1)
+                    data.clear();
+                else
+                {
+                    if(data.length() > 0)
+                       paragraph += data;
+
+                }
+
+               }
+             else if(iter->type == GUMBO_NODE_ELEMENT
+                     && paragraph.length() > 0)
+
+            {
+
+                 const Element tr(*iter);
+                 SearchResult result;
+
+
+                 if(iter->v.element.tag == GUMBO_TAG_P)
+                {
+
+                   if(row == 1)
+                       result.mUrl = d->url;
+
+                   result.text = paragraph;
+                   result.index =  QString::number(++index);
+
+                   qDebug() << row << paragraph << index;
+                   d->results << result;
+                   paragraph.clear();
+
+
+                 }
+
+
+
+            }
+
+             if(iter->type == GUMBO_NODE_WHITESPACE)
+                 break;
+
+             ++iter;
+         }
+
+      }
+
+
+
+    }
+
+
+}
+void SearchBackend::parseContents(QByteArray bytearray)
+{
+
+    Gumbo gumbo(bytearray.data());
+
+  //  <span class=\"mw-headline\"
+    if(gumbo)
+    {
+       using Iterator = Gumbo::iterator;
+       QString title;
+       int idx = 0;
+
+
+       auto tagHeadline =findAll( gumbo.begin(), gumbo.end(), And(Tag(GUMBO_TAG_SPAN),
+                                                                  HasAttribute("class", "mw-headline")));
+
+       for (size_t row = 0; row < tagHeadline.size(); ++row)
+       {
+
+          Iterator iter(tagHeadline[row]), end;
+
+           while(iter != end )
+           {
+
+              if(iter->type == GUMBO_NODE_TEXT)
+              {
+                QString data = QString::fromUtf8(iter->v.text.text);
+
+                if(data.length() > 0)
+                   title = data;
+
+
+              }
+              else if(iter->type == GUMBO_NODE_ELEMENT
+                          && title.length() > 0)
+              {
+
+                 const Element tr(*iter);
+                 SearchResult result;
+
+                 if(iter->v.element.tag == GUMBO_TAG_SPAN)
+                 {
+                   result.contents = title;
+                   qDebug() << row << title;
+
+                 }
+
+              }
+
+            ++iter;
+          }  // while
+
+     }  // for
+
+  }
+
+}

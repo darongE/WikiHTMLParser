@@ -46,5 +46,4 @@ FORMS += \
 include($$PWD/deps/GumboParser.pri)
 
 DISTFILES += \
-    memo \
     backup
