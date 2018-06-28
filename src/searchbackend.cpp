@@ -152,9 +152,6 @@ bool SearchBackend::search(const QString &backendName, const QString &searchTerm
 
     parseAll(htmlData.toLatin1());
   //  parseContents(htmlData.toLatin1());
-
-
-
  //   qDebug() << "html data" << htmlData;
     emit signalSearchCompleted();
 
@@ -167,10 +164,9 @@ bool SearchBackend::search(const QString &backendName, const QString &searchTerm
      if (gumbo) {
          auto iter = std::find_if(RANGE(gumbo), And(Tag(GUMBO_TAG_DIV),
                                                     HasAttribute("class", "mw-parser-output")));
-         const Element pager(*iter);
-         parseText(pager.children()[0]->parent);
-
-
+         const Element elPage(*iter);
+         parseText(elPage.children()[0]->parent);
+        // parseTagAttributes(elPage.children()[0]->parent);
 
      }
  }
@@ -178,26 +174,94 @@ bool SearchBackend::search(const QString &backendName, const QString &searchTerm
  void SearchBackend::parseText(GumboNode *node)
  {
 
-
     using Iterator = Gumbo::iterator;
     Iterator iter(node);
     const Iterator end;
 
-     QRegExp rx("\\[|\\]");
-
-     int index = 0;
+    int index = 0;
+    QRegExp rx("\\[|\\]");
+    QString paragraph;
 
     const auto tagP = findAll(iter.fromCurrent(), end, Tag(GUMBO_TAG_P));
 
     for (size_t row = 0; row < tagP.size(); ++row)
     {
-        extractTagPItem(tagP[row]->parent);
+
+        Iterator iter(tagP[row]);
+
+        while(iter != end )
+        {
+
+            if (iter->type == GUMBO_NODE_TEXT)
+            {
+                QString data = QString::fromUtf8(iter->v.text.text);
+                int pos = rx.indexIn(data);
+
+                if(pos > -1)
+                    data.clear();
+                else
+                {
+                    if(data.length() > 0)
+                       paragraph += data;
+
+                }
+
+            }
+            else if(iter->type == GUMBO_NODE_ELEMENT
+                    && iter->v.element.tag == GUMBO_TAG_P
+                    && paragraph.size() > 0)
+            {
+
+                SearchResult result;
+                if(row == 1)
+                    result.mUrl = d->url;
+                    
+                result.text = paragraph;
+                result.index =  QString::number(++index);
+                d->results << result;
+                paragraph.clear();
+
+               QString endTag = QString::fromUtf8(iter->v.document.system_identifier).left(20);
+               findEndTag(endTag,row);
+
+            }
+
+            if(iter->type == GUMBO_NODE_WHITESPACE)
+                break;
+
+            iter++;
+       }
+
+
     }
+
+    qDebug() << "END";
 
   }
 
 
- void SearchBackend::extractTagPItem(GumboNode *node)
+
+ void SearchBackend::findEndTag(QString &tag, int row)
+ {
+
+     qDebug() << "end tag" << tag
+              << "row"     << row;
+
+     SearchResult m_search;
+     QString endTag1 = "</p>\n<h2>";
+     QString endTag2 = "</p><div";
+     QString endTag3 = "</p>\n<h3>";
+
+
+     if(tag.startsWith(endTag1) || tag.startsWith(endTag2) ||
+        tag.startsWith(endTag3))
+     {
+        m_search.text = "title";
+        d->results.insert(row,m_search);
+     }
+ }
+
+ void SearchBackend::parseTagAttributes(GumboNode *node)
  {
 
     using Iterator = Gumbo::iterator;
@@ -211,6 +275,8 @@ bool SearchBackend::search(const QString &backendName, const QString &searchTerm
     for (size_t row = 0; row < tagSpan.size(); ++row)
     {
 
+        Iterator iter(tagSpan[row]);
+
         while(iter != end )
         {
 
@@ -221,18 +287,20 @@ bool SearchBackend::search(const QString &backendName, const QString &searchTerm
              if(data.length() > 0)
                 title = data;
 
-
            }
            else if(iter->type == GUMBO_NODE_ELEMENT
-                    && iter->v.element.tag == GUMBO_TAG_SPAN
                    && title.length() > 0)
            {
 
-              const Element tr(*iter);
+              const Element elHeadline(*iter);
               SearchResult result;
 
-              result.contents = title;
-              qDebug() << row << title;
+              if(QString(elHeadline.attribute("class")->value) == "mw-headline")
+              {
+               result.contents = title;
+               qDebug() << row << title;
+              }
+
 
            }
 
@@ -242,28 +310,16 @@ bool SearchBackend::search(const QString &backendName, const QString &searchTerm
 
  }
 
- //search endTag
+SearchBackend::SearchResult::List SearchBackend::getResults() const
+{
+    return d->results;
+}
 
-// void SearchBackend::findEndTag(QString &tag, int row)
-// {
 
-
-//     qDebug() << "end tag" << tag
-//              << "row"     << row;
-
-//     SearchResult m_search;
-//     QString endTag1 = "</p>\n<h2><span";
-//     QString endTag2 = "<p></p><div";
-//     QString endTag3 = "</p>\n<div";
-
-//     if(tag.startsWith(endTag1) || tag.startsWith(endTag2) ||
-//        tag.startsWith(endTag3))
-//     {
-//        m_search.text = "title";
-//        d->results.insert(row,m_search);
-//     }
-// }
-
+QString SearchBackend::getErrorMessage() const
+{
+    return d->errorMessage;
+}
 
 
 // <h2>Contents</h2>
@@ -278,20 +334,6 @@ bool SearchBackend::search(const QString &backendName, const QString &searchTerm
 
 
  // parsing
-
-
-SearchBackend::SearchResult::List SearchBackend::getResults() const
-{
-    return d->results;
-}
-
-
-QString SearchBackend::getErrorMessage() const
-{
-    return d->errorMessage;
-}
-
-
 
 
 

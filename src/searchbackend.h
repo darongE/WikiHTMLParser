@@ -64,15 +64,13 @@ public slots:
 private:
    void parseAll(const QByteArray &html);
    void parseText(GumboNode *node);
-   void extractTagPItem(GumboNode *node);
-//   void parseContents(const QByteArray &html);
-//   void parseDetails();
-
+   void parseTagAttributes(GumboNode *node);
+   void findH2Tag(GumboNode *node);
 private:
     class Private;
     Private* const d;
 
-    QList<int> title_index;
+    QStringList subtitles;
 };
 
 #endif // SEARCHBACKEND_H
