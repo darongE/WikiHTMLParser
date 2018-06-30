@@ -1,3 +1,94 @@
+void SearchBackend::parseH3(GumboNode *node)
+{
+
+    using Iterator = Gumbo::iterator;
+    Iterator iter(node);
+    const Iterator end;
+    QRegExp regH3Ex("</h3>\n<p>");
+
+    auto attrH3 = findAll(iter.fromCurrent(), end, Tag(GUMBO_TAG_H3));
+
+
+
+    for (size_t row = 0; row < attrH3.size(); ++row)
+    {
+
+        Iterator iter(attrH3[row]);
+
+        while(iter != end )
+        {
+           if(iter->type == GUMBO_NODE_ELEMENT
+                   && iter->v.element.tag == GUMBO_TAG_H3)
+           {
+
+              QString endTag = QString::fromUtf8(iter->v.document.system_identifier).left(40);
+
+              int pos = regH3Ex.indexIn(endTag);
+
+              if(pos > -1)      // get position
+               {
+                  endTag.remove(regH3Ex);
+                  tagH3List << endTag;
+
+               }
+
+              qDebug() << row << "," << endTag;
+
+           }
+
+         ++iter;
+        }
+    }
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//search endTag
+
+void SearchBackend::findEndTag(QString &tag, int row)
+{
+
+
+    qDebug() << "end tag" << tag
+             << "row"     << row;
+
+    SearchResult m_search;
+    QString endTag1 = "</p>\n<h2><span";
+    QString endTag2 = "<p></p><div";
+    QString endTag3 = "</p>\n<div";
+
+    if(tag.startsWith(endTag1) || tag.startsWith(endTag2) ||
+       tag.startsWith(endTag3))
+    {
+       m_search.text = "title";
+       d->results.insert(row,m_search);
+    }
+}
+
+
+
+
+///////////Original Code ////////////
+
 void SearchBackend::parse(QByteArray bytearray)
 {
     Gumbo gumbo(bytearray.data());

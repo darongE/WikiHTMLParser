@@ -36,6 +36,7 @@ public:
         QString                     country;
         QString                     text;
         QString                 contents;
+        QString                     endTag;
         QUrl                        mUrl;
 
     };
@@ -51,7 +52,8 @@ public:
 
     SearchResult::List getResults() const;
     QString getErrorMessage() const;
-    void findEndTag(QString &tag, int row);
+    void findEndTag();
+    void replaceValue();
 
 signals:
 
@@ -65,12 +67,20 @@ private:
    void parseAll(const QByteArray &html);
    void parseText(GumboNode *node);
    void parseTagAttributes(GumboNode *node);
-   void findH2Tag(GumboNode *node);
+
+   void parseH2(GumboNode *node);
+   void parseDIV(GumboNode *node);
+
+   void compareTextAndSubtitles();
+   void compareDIVNText();
+
 private:
     class Private;
     Private* const d;
 
     QStringList subtitles;
+    QStringList tagH2List;
+    QStringList tagDIVList;
 };
 
 #endif // SEARCHBACKEND_H
