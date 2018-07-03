@@ -7,6 +7,7 @@
 #include <QJsonDocument>
 #include <QJsonArray>
 #include <QJsonObject>
+#include "taghandler.h"
 
 
 #define RANGE(x)  x.begin(), x.end()
@@ -41,6 +42,7 @@ public:
 SearchBackend::SearchBackend(QObject * const parent)
     : QObject(parent),
       d(new Private())
+
 {
 
 }
@@ -49,6 +51,7 @@ SearchBackend::~SearchBackend()
 {
 
     delete d;
+
 }
 
 
@@ -144,15 +147,16 @@ bool SearchBackend::search(const QString &backendName, const QString &searchTerm
          return;
      }
 
-
     QJsonObject jsonObject = doc.object();
-    QString htmlData;
-    QJsonObject subObj = jsonObject["parse"].toObject()["text"].toObject();
-    htmlData = subObj.value("*").toString();
+    QJsonObject mainObj = jsonObject["parse"].toObject();
+    QJsonObject subObj = mainObj["text"].toObject();
+    QJsonArray sectionArray = mainObj["sections"].toArray();
 
+    QString htmlData = subObj.value("*").toString();
+
+    parseIndex(sectionArray);
     parseAll(htmlData.toLatin1());
 
- //   qDebug() << "html data" << htmlData;
     emit signalSearchCompleted();
 
     reply->deleteLater();
@@ -168,12 +172,14 @@ bool SearchBackend::search(const QString &backendName, const QString &searchTerm
       //   parseDIV(elPage.children()[0]->parent);
          parseText(elPage.children()[0]->parent);
          parseH2(elPage.children()[0]->parent);
-
-         parseTagAttributes(elPage.children()[0]->parent);
+         parseH3(elPage.children()[0]->parent);
          parseDIV(elPage.children()[0]->parent);
-//         compareTextAndSubtitles();
-         compareDIVNText();
+         insertStringList();
+        // parseTable(elPage.children()[0]->parent);
+         //compareTextAndSubtitles();
 
+         // compareDIVNText();
+//         compareTextAndSubtitles();
        //  replaceValue();
 
      }
@@ -213,7 +219,6 @@ bool SearchBackend::search(const QString &backendName, const QString &searchTerm
                 {
                     if(data.length() > 0)
                        paragraph += data;
-
                 }
 
             }
@@ -232,7 +237,7 @@ bool SearchBackend::search(const QString &backendName, const QString &searchTerm
                 paragraph.clear();
 
                 QString endTag = QString::fromUtf8(iter->v.document.system_identifier).left(12);
-                qDebug() << row << "," << endTag;
+                //qDebug() << row << "," << endTag;
                 result.endTag = endTag;
                 d->results << result;
 
@@ -248,7 +253,7 @@ bool SearchBackend::search(const QString &backendName, const QString &searchTerm
 
     }
 
-    qDebug() << "END";
+    //qDebug() << "END";
 
   }
 
@@ -286,13 +291,73 @@ void SearchBackend::findEndTag()
 
  }
 
+//"sections": [
+//     {
+//       "toclevel": 1,
+//       "level": "2",
+//       "line": "Early life",
+//       "number": "1",
+//       "index": "1",
+//       "fromtitle": "Thomas_Edison",
+//       "byteoffset": 5451,
+//       "anchor": "Early_life"
+//     },
+//     {
+//       "toclevel": 1,
+//       "level": "2",
+//       "line": "Telegrapher",
+//       "number": "2",
+//       "index": "2",
+//       "fromtitle": "Thomas_Edison",
+//       "byteoffset": 11545,
+//       "anchor": "Telegrapher"
+//     },
+//     {
+//       "toclevel": 1,
+//       "level": "2",
+//       "line": "Marriages and children",
+//       "number": "3",
+//       "index": "3",
+//       "fromtitle": "Thomas_Edison",
+//       "byteoffset": 13139,
+//       "anchor": "Marriages_and_children"
+//     },
+//]
+void SearchBackend::parseIndex(QJsonArray m_jsonarr)
+{
+
+    QJsonArray jsonarr = m_jsonarr;
+    int total = 0,i = 0;
+    QString title("");
+    QString strIndex = 0;
+
+    total = jsonarr.count();
+
+    QRegExp dot("\\.");
+    for(i = 0; i < total; ++i)
+    {
+        QJsonObject sectionObj = jsonarr.at(i).toObject();
+        title = sectionObj["line"].toString();
+        strIndex = sectionObj["number"].toString();
+
+        // string have '.'
+        title = QString("%1 %2").arg(strIndex).arg(title);
+        int pos = dot.indexIn(title);
+
+        (pos > -1)? subTitles << title :Titles << title;
+     }
+
+}
+
+
+
 void SearchBackend::parseH2(GumboNode *node)
 {
 
     using Iterator = Gumbo::iterator;
     Iterator iter(node);
     const Iterator end;
-    QRegExp regH2Ex("</h2>\n<p>");
+   // QRegExp regH2Ex("</h2>\n<p>");
 
     auto tagH2 = findAll(iter.fromCurrent(), end, Tag(GUMBO_TAG_H2));
 
@@ -307,16 +372,53 @@ void SearchBackend::parseH2(GumboNode *node)
                    && iter->v.element.tag == GUMBO_TAG_H2)
            {
 
-              QString endTag = QString::fromUtf8(iter->v.document.system_identifier).left(40);
+              QString endTag = QString::fromUtf8(iter->v.document.system_identifier).left(60);
 
-              int pos = regH2Ex.indexIn(endTag);
+               tagH2List << endTag;
 
-              if(pos > -1)      // get position
-               {
-                  endTag.remove(regH2Ex);
-                  tagH2List << endTag;
+              qDebug() << row << "," << endTag;
 
-               }
+           }
+
+         ++iter;
+        }
+    }
+
+    tagH2List.pop_front();
+
+}
+
+
+
+/// div class=\"thumb tright\"
+
+
+void SearchBackend::parseH3(GumboNode *node)
+{
+
+    using Iterator = Gumbo::iterator;
+    Iterator iter(node);
+    const Iterator end;
+    QRegExp regH3Ex("</h3>\n<p>");
+
+    auto tagH3 = findAll(iter.fromCurrent(), end, Tag(GUMBO_TAG_H3));
+
+    for (size_t row = 0; row < tagH3.size(); ++row)
+    {
+
+        Iterator iter(tagH3[row]);
+
+        while(iter != end )
+        {
+           if(iter->type == GUMBO_NODE_ELEMENT
+                   && iter->v.element.tag == GUMBO_TAG_H3)
+           {
+
+              QString startTag =QString::fromUtf8(iter->v.document.name).left(45);
+              tagH3StartList << startTag;
+
+              QString endTag = QString::fromUtf8(iter->v.document.system_identifier).left(45);
+              tagH3List << endTag;
 
               qDebug() << row << "," << endTag;
 
@@ -327,50 +429,6 @@ void SearchBackend::parseH2(GumboNode *node)
     }
 
 }
-void SearchBackend::parseTagAttributes(GumboNode *node)
- {
-
-    using Iterator = Gumbo::iterator;
-    Iterator iter(node);
-    const Iterator end;
-    QString title;
-
-    auto tagSpan = findAll(iter.fromCurrent(), end, And(Tag(GUMBO_TAG_SPAN),
-                                                     HasAttribute("class", "mw-headline")));
-
-    for (size_t row = 0; row < tagSpan.size(); ++row)
-    {
-
-        Iterator iter(tagSpan[row]);
-
-        while(iter != end )
-        {
-            if(iter->type == GUMBO_NODE_TEXT)
-            {
-                title = QString::fromUtf8(iter->v.text.text);
-            }
-            else if(iter->type == GUMBO_NODE_ELEMENT
-                    && title.size() > 0)
-           {
-              Element elHeadline(*iter);
-
-              if(QString(elHeadline.attribute("class")->value) == "mw-headline")
-              {
-               subtitles << title;
-               qDebug() << row << title;
-              }
-
-           }
-
-         ++iter;
-        }
-    }
-
- }
-
-/// div class=\"thumb tright\"
-
-
 void SearchBackend::parseDIV(GumboNode *node)
 {
 
@@ -398,7 +456,11 @@ void SearchBackend::parseDIV(GumboNode *node)
 
                if(QString(elDIV.attribute("class")->value) == "thumb tright")
                {
-                QString endTag = QString::fromUtf8(iter->v.document.system_identifier).left(40);
+
+                QString startTag = QString::fromUtf8(iter->v.document.name).left(60);
+                tagDIVStartList << startTag;
+
+                QString endTag = QString::fromUtf8(iter->v.document.system_identifier).left(60);
                 int pos = regDIV.indexIn(endTag);
 
                 if(pos > -1)      // get position
@@ -408,7 +470,7 @@ void SearchBackend::parseDIV(GumboNode *node)
 
                  }
 
-                 qDebug() << row << "," << endTag;
+               //  qDebug() << row << "," << endTag;
                }
 
 
@@ -426,6 +488,53 @@ void SearchBackend::parseDIV(GumboNode *node)
 
 /// compare text and subtitles
 
+void SearchBackend::parseTable(GumboNode *node)
+{
+    using Iterator = Gumbo::iterator;
+    Iterator iter(node);
+    const Iterator end;
+
+    auto tagTable = findAll(iter.fromCurrent(), end, Tag(GUMBO_TAG_TABLE));
+
+
+    for (size_t row = 0; row < tagTable.size(); ++row)
+    {
+
+        Iterator iter(tagTable[row]);
+
+        while(iter != end )
+        {
+           if(iter->type == GUMBO_NODE_ELEMENT
+                   && iter->v.element.tag == GUMBO_TAG_TABLE)
+           {
+
+              QString startTag = QString::fromUtf8(iter->v.document.name).left(45);
+              tagTableStartList << startTag;
+              QString endTag = QString::fromUtf8(iter->v.document.system_identifier).left(45);
+              tagTableList << endTag;
+
+              qDebug() << row << "," << endTag;
+
+           }
+
+         ++iter;
+        }
+    }
+}
+
+void SearchBackend::insertStringList()
+{
+    TagHandler m_taghandler;
+
+    m_taghandler.tagH2End = tagH2List;
+    m_taghandler.tagH3Start = tagH3StartList;
+    m_taghandler.tagDIVEnd = tagDIVList;
+    m_taghandler.titleList = Titles;
+    m_taghandler.subTitleList = subTitles;
+
+    m_taghandler.compareTag();
+
+}
 void SearchBackend::compareTextAndSubtitles()
 {
    int nSize = d->results.size();
@@ -434,7 +543,6 @@ void SearchBackend::compareTextAndSubtitles()
    SearchResult m_search;
 
       // compare text <p> text and <h3> text
-
 
     for(i = 0; i < nSize; ++i)
     {
@@ -453,7 +561,7 @@ void SearchBackend::compareTextAndSubtitles()
        }
    }
 
-
+  //replaceHeadlineWithValue();
 }
 
 void SearchBackend::compareDIVNText()
@@ -466,14 +574,14 @@ void SearchBackend::compareDIVNText()
    for(i = 0;  i < nSize; ++i)
    {
 
-     for(int j = 0; j < tagDIVList.size(); ++j)
+     for(int j = 0; j < tagH3List.size(); ++j)
      {
 
-        QRegExp exp(tagDIVList[j]);
+        QRegExp exp(tagH3List[j]);
 
         if(exp.indexIn(d->results[i].text) > -1)
         {
-             m_search.text = "headline";
+             m_search.text = "subtitle";
              d->results.insert(i,m_search);
              ++i;
         }
@@ -481,7 +589,14 @@ void SearchBackend::compareDIVNText()
 
    }
 
+
+
 }
+
+
+/// compare tag
+///
+///
 
 
 SearchBackend::SearchResult::List SearchBackend::getResults() const

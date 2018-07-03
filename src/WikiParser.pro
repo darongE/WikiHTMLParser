@@ -29,14 +29,16 @@ SOURCES += \
     geocoordinates.cpp \
     searchbackend.cpp \
     searchresultmodel.cpp \
-    contentsdialog.cpp
+    contentsdialog.cpp \
+    taghandler.cpp
 
 HEADERS += \
         mainwindow.h \
     geocoordinates.h \
     searchbackend.h \
     searchresultmodel.h \
-    contentsdialog.h
+    contentsdialog.h \
+    taghandler.h
 
 
 FORMS += \

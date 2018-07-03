@@ -12,9 +12,11 @@
  */
 
 using namespace EasyGumbo;
+
 class SearchBackend : public QObject
 {
     Q_OBJECT
+
 public:
 
     class SearchResult
@@ -48,12 +50,22 @@ public:
     explicit SearchBackend(QObject* const parent);
     ~SearchBackend();
 
+
+public:
+
+
+
     bool search(const QString& backendName,const QString& searchTerm);
 
     SearchResult::List getResults() const;
     QString getErrorMessage() const;
     void findEndTag();
-    void replaceValue();
+    void insertStringList();
+
+    void compareTextAndSubtitles();
+    void compareDIVNText();
+  //  void replaceHeadlineWithValue();
+    void replaceTitleWithValue();
 
 signals:
 
@@ -63,24 +75,32 @@ public slots:
    void slotFinished(QNetworkReply* reply);
 
 
+public:
+    class FilterTag;
 private:
    void parseAll(const QByteArray &html);
    void parseText(GumboNode *node);
-   void parseTagAttributes(GumboNode *node);
 
+   void parseIndex(QJsonArray m_jsonarr);
    void parseH2(GumboNode *node);
+   void parseH3(GumboNode *node);
    void parseDIV(GumboNode *node);
+   void parseTable(GumboNode *node);
 
-   void compareTextAndSubtitles();
-   void compareDIVNText();
 
-private:
-    class Private;
-    Private* const d;
+   class Private;
+   Private* const d;
 
-    QStringList subtitles;
-    QStringList tagH2List;
-    QStringList tagDIVList;
+
+   QStringList Titles;
+   QStringList subTitles;
+   QStringList tagH2List;
+   QStringList tagH3List;
+   QStringList tagH3StartList;
+   QStringList tagDIVStartList;
+   QStringList tagDIVList;
+   QStringList tagTableStartList;
+   QStringList tagTableList;
 };
 
 #endif // SEARCHBACKEND_H
