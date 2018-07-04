@@ -6,6 +6,8 @@
 #include <QNetworkReply>
 #include "geocoordinates.h"
 #include "gumbo.hpp"
+#include "filtertag.h"
+
 /*
  * This code bring on https://github.com/KDE/digikam/
  *
@@ -62,8 +64,8 @@ public:
     void findEndTag();
     void insertStringList();
 
-    void compareTextAndSubtitles();
-    void compareDIVNText();
+    void pushH2Title();
+    void pushH3Title();
   //  void replaceHeadlineWithValue();
     void replaceTitleWithValue();
 
@@ -75,8 +77,7 @@ public slots:
    void slotFinished(QNetworkReply* reply);
 
 
-public:
-    class FilterTag;
+
 private:
    void parseAll(const QByteArray &html);
    void parseText(GumboNode *node);
@@ -90,7 +91,7 @@ private:
 
    class Private;
    Private* const d;
-
+   FilterTag    *filtertag;
 
    QStringList Titles;
    QStringList subTitles;
@@ -100,7 +101,9 @@ private:
    QStringList tagDIVStartList;
    QStringList tagDIVList;
    QStringList tagTableStartList;
-   QStringList tagTableList;
+   QStringList tagTableEndList;
+
+
 };
 
 #endif // SEARCHBACKEND_H

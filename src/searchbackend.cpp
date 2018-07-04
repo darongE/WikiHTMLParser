@@ -1,5 +1,3 @@
-#include "searchbackend.h"
-
 #include <QNetworkAccessManager>
 #include <QDebug>
 #include <QDomDocument>
@@ -7,7 +5,9 @@
 #include <QJsonDocument>
 #include <QJsonArray>
 #include <QJsonObject>
-#include "taghandler.h"
+
+
+#include "searchbackend.h"
 
 
 #define RANGE(x)  x.begin(), x.end()
@@ -30,6 +30,7 @@ public:
 
     }
 
+
     SearchResult::List                results;
     QNetworkReply*                    netReply;
     QString                           runningBackend;
@@ -37,21 +38,24 @@ public:
     QString                           errorMessage;
     QUrl                              url;
 
+
+
 };
 
 SearchBackend::SearchBackend(QObject * const parent)
     : QObject(parent),
       d(new Private())
 
-{
 
+{
+    filtertag = new FilterTag(this);
 }
 
 SearchBackend::~SearchBackend()
 {
 
     delete d;
-
+    delete filtertag;
 }
 
 
@@ -169,18 +173,15 @@ bool SearchBackend::search(const QString &backendName, const QString &searchTerm
          auto iter = std::find_if(RANGE(gumbo), And(Tag(GUMBO_TAG_DIV),
                                                     HasAttribute("class", "mw-parser-output")));
          const Element elPage(*iter);
-      //   parseDIV(elPage.children()[0]->parent);
+
          parseText(elPage.children()[0]->parent);
          parseH2(elPage.children()[0]->parent);
          parseH3(elPage.children()[0]->parent);
          parseDIV(elPage.children()[0]->parent);
-         insertStringList();
-        // parseTable(elPage.children()[0]->parent);
-         //compareTextAndSubtitles();
+         parseTable(elPage.children()[0]->parent);
 
-         // compareDIVNText();
-//         compareTextAndSubtitles();
-       //  replaceValue();
+         insertStringList();
+
 
      }
  }
@@ -417,7 +418,7 @@ void SearchBackend::parseH3(GumboNode *node)
               QString startTag =QString::fromUtf8(iter->v.document.name).left(45);
               tagH3StartList << startTag;
 
-              QString endTag = QString::fromUtf8(iter->v.document.system_identifier).left(45);
+              QString endTag = QString::fromUtf8(iter->v.document.system_identifier).left(100);
               tagH3List << endTag;
 
               qDebug() << row << "," << endTag;
@@ -511,7 +512,7 @@ void SearchBackend::parseTable(GumboNode *node)
               QString startTag = QString::fromUtf8(iter->v.document.name).left(45);
               tagTableStartList << startTag;
               QString endTag = QString::fromUtf8(iter->v.document.system_identifier).left(45);
-              tagTableList << endTag;
+              tagTableEndList << endTag;
 
               qDebug() << row << "," << endTag;
 
@@ -524,21 +525,25 @@ void SearchBackend::parseTable(GumboNode *node)
 
 void SearchBackend::insertStringList()
 {
-    TagHandler m_taghandler;
+    filtertag->tagH2End = tagH2List;
+    filtertag->tagH3Start = tagH3StartList;
+    filtertag->tagH3End   = tagH3List;
+    filtertag->tagDIVEnd = tagDIVList;
+    filtertag->titleList = Titles;
+    filtertag->subTitleList = subTitles;
+    filtertag->tagTableEndList = tagTableEndList;
 
-    m_taghandler.tagH2End = tagH2List;
-    m_taghandler.tagH3Start = tagH3StartList;
-    m_taghandler.tagDIVEnd = tagDIVList;
-    m_taghandler.titleList = Titles;
-    m_taghandler.subTitleList = subTitles;
-
-    m_taghandler.compareTag();
+    filtertag->compareTag();
+ //   pushH2Title();
+    pushH3Title();
 
 }
-void SearchBackend::compareTextAndSubtitles()
+
+
+void SearchBackend::pushH2Title()
 {
    int nSize = d->results.size();
-   int i = 0,idx = 0;
+   int i = 0;
 
    SearchResult m_search;
 
@@ -546,9 +551,9 @@ void SearchBackend::compareTextAndSubtitles()
 
     for(i = 0; i < nSize; ++i)
     {
-       for(int j = 0; j < tagH2List.size(); ++j)
+       for(int j = 0; j < filtertag->tagH2End.size(); ++j)
        {
-          QRegExp exp(tagH2List[j]);
+          QRegExp exp(filtertag->tagH2End[j]);
          if(exp.indexIn(d->results[i].text) > -1)
 
          {
@@ -564,20 +569,20 @@ void SearchBackend::compareTextAndSubtitles()
   //replaceHeadlineWithValue();
 }
 
-void SearchBackend::compareDIVNText()
+void SearchBackend::pushH3Title()
 {
    int nSize = d->results.size();
-   int i = 0,idx = 0;
+   int i = 0;
 
    SearchResult m_search;
 
    for(i = 0;  i < nSize; ++i)
    {
 
-     for(int j = 0; j < tagH3List.size(); ++j)
+     for(int j = 0; j < filtertag->tagH3End.size(); ++j)
      {
 
-        QRegExp exp(tagH3List[j]);
+        QRegExp exp(filtertag->tagH3End[j]);
 
         if(exp.indexIn(d->results[i].text) > -1)
         {

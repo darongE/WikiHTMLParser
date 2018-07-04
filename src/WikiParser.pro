@@ -30,7 +30,7 @@ SOURCES += \
     searchbackend.cpp \
     searchresultmodel.cpp \
     contentsdialog.cpp \
-    taghandler.cpp
+    filtertag.cpp
 
 HEADERS += \
         mainwindow.h \
@@ -38,7 +38,7 @@ HEADERS += \
     searchbackend.h \
     searchresultmodel.h \
     contentsdialog.h \
-    taghandler.h
+    filtertag.h
 
 
 FORMS += \
